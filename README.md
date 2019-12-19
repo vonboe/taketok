@@ -2,6 +2,11 @@
 - Taking Tiktok video and saving it locally.
 - Tiktok video downloader using video post ID
 
+### Installation
+1. Clone the project
+2. Go to project directory
+3. Run `npm i`
+
 ### How to use
 **Command:** `node index.js <post-id>`
 

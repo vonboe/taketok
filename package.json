@@ -1,0 +1,29 @@
+{
+  "name": "taketok",
+  "version": "1.0.0",
+  "description": "A web-service that downloads tiktok videos",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zsannenmariano/taketok.git"
+  },
+  "author": "Zsannen D. Mariano",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zsannenmariano/taketok/issues"
+  },
+  "homepage": "https://github.com/zsannenmariano/taketok#readme",
+  "dependencies": {
+    "download-file": "^0.1.5",
+    "lodash": "^4.17.15",
+    "node-fetch": "^2.6.0",
+    "tiktok-api": "^0.4.1",
+    "url-regex": "^5.0.0",
+    "wget": "0.0.1",
+    "wget-improved": "^3.0.2"
+  }
+}

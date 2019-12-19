@@ -1,2 +1,2 @@
 # taketok
-A web-service that downloads tiktok videos
+Tiktok video downloader using video post permalink

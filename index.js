@@ -4,10 +4,32 @@ const _ = require('lodash');
 const wget = require('wget-improved');
 const urlRegex = require("url-regex");
 const fetch = require("node-fetch");
-const https = require('https');
+const http = require('http');
 const fs = require('fs');
 
 // https://github.com/sudoguy/tiktok_bot/blob/113607be2108fbc56c39ac174557374897e470f8/tiktok_bot/client/utils.py
+
+const uploadLocally = function (url, id) {
+    var outputFolder = './downloads/';
+    if (!outputFolder.endsWith('/')) outputFolder += '/';
+
+    console.log(`Output folder > ${outputFolder}`);
+    console.log(`URL > ${url}`);
+
+    fetch(url)
+        .then(res => {
+            console.log('RES', res.url);
+            return res.url;
+        })
+        .then(urlWithoutWatermark => {
+            const file = fs.createWriteStream(`${outputFolder}${id}`);
+            const request = http.get(urlWithoutWatermark, function(response) {
+                response.pipe(file);
+            });
+            console.log("UPLOADED!!");
+        });
+
+}
 
 const signURL = async (url, ts, deviceId) => {
     console.log(url, ts, deviceId);
@@ -47,83 +69,48 @@ const params = getRequestParams({
 });
 
 const api = new TikTokAPI(params, { signURL });
-// not working without auth
-// api.listPosts({
-//         user_id: '5024672',
-//         count: 1,
-//         cursor: 0,
-//     })
-//     .then(res => {
-//         if (res.data) {
-//             console.log(res.data)
-//         }
-//     })
-//     .catch(console.log);
 
-// works without proper signing
-// https://gist.github.com/pandafox/c19ad740d53d1da9b2c73ebf3d05f0e3#file-sample_post_detail-json
-api.getPost('6769511215174601990')
-    .then(res => {
-        //console.log('RES = ', res);
-        let watermark_url = _.find(_.get(res, 'data.aweme_detail.video.download_addr.url_list'),
-            url => _.includes(url, 'watermark'));
-        if (!watermark_url) {
-            console.log('device id blocked');
-        } else {
-            // duration of the video in ms
-            // _.find(_.get(res, 'data.aweme_detail.duration') / 1000
-
-            // music only URL
-            // _.first(_.get(res, 'data.aweme_detail.music.play_url.url_list'))
-
-            // remove watermark, and use highest quality
-            let video_url = watermark_url
-                .replace('watermark=1', 'watermark=0')
-                .replace('bitrate=0', 'bitrate=1');
-
-            uploadLocally(video_url, `${res.data.aweme_detail.aweme_id}.mp4`);
-        }
-    })
-    .catch(err => {
-        console.log("ERROR", error);
-    });
-
-const uploadLocally = function (url, id) {
-    var outputFolder = './downloads/';
-    if (!outputFolder.endsWith('/')) outputFolder += '/';
-
-    console.log(`Output folder > ${outputFolder}`);
-    console.log(`URL > ${url}`);
-
-    fetch(url)
+if (process.argv.length == 3) {
+    // works without proper signing
+    // https://gist.github.com/pandafox/c19ad740d53d1da9b2c73ebf3d05f0e3#file-sample_post_detail-json
+    api.getPost(process.argv[2])
         .then(res => {
-            return res.text();
+            //console.log('RES = ', res);
+            let watermark_url = _.find(_.get(res, 'data.aweme_detail.video.download_addr.url_list'),
+                url => _.includes(url, 'watermark'));
+
+            if (!watermark_url) {
+                console.log('device id blocked');
+            } else {
+                // duration of the video in ms
+                // _.find(_.get(res, 'data.aweme_detail.duration') / 1000
+
+                // music only URL
+                // _.first(_.get(res, 'data.aweme_detail.music.play_url.url_list'))
+
+                // remove watermark, and use highest quality
+                let video_url = watermark_url
+                    .replace('watermark=1', 'watermark=0')
+                    .replace('bitrate=0', 'bitrate=1');
+
+                console.log("Video URL = ", video_url);
+
+                uploadLocally(video_url, `${res.data.aweme_detail.aweme_id}.mp4`);
+            }
         })
-        .then(body => {
-            const urls = body.match(urlRegex());
-            const mediaUrl = urls.find(url => url.includes("muscdn.com") && url.includes("https://v"));
-            console.log(`Found Media URL: ${mediaUrl}`);
-
-            const file = fs.createWriteStream(`${outputFolder}${id}`);
-            const request = https.get(url, function(response) {
-                response.pipe(file);
-            });
+        .catch(err => {
+            console.log("ERROR", err);
         });
-
+} else {
+    console.log("Message: Missing Post ID.");
+    console.log("");
+    console.log("Command: node index.js <post-id>");
+    console.log("");
+    console.log("Example: node index.js 6768815793829383429");
+    console.log("");
+    console.log("Where to find Post ID:");
+    console.log("   1. Go to Tiktok");
+    console.log("   2. Access a video post");
+    console.log("   3. Get the video post ID from the last segment of the URL");
+    process.exit(0);
 }
-
-// You are now able to make successful requests
-// api.listForYouFeed()
-//     .then(res => console.log(res.data))
-//     .catch(console.log);
-
-// api.searchUsers({
-//         keyword: 'nianaguerrero',
-//         count: 1,
-//         cursor: 0,
-//     })
-//     .then(res => console.log(res.data))
-//     .catch(console.log);
-// api.getUser('rebeccacornford')
-//     .then(res => console.log(res.data))
-//     .catch(console.log);og("listPosts = ", res.data.aweme_list))

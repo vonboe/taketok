@@ -18,7 +18,6 @@ const uploadLocally = function (url, id) {
 
     fetch(url)
         .then(res => {
-            console.log('RES', res.url);
             return res.url;
         })
         .then(urlWithoutWatermark => {
@@ -70,17 +69,17 @@ const params = getRequestParams({
 
 const api = new TikTokAPI(params, { signURL });
 
-if (process.argv.length == 3) {
-    // works without proper signing
-    // https://gist.github.com/pandafox/c19ad740d53d1da9b2c73ebf3d05f0e3#file-sample_post_detail-json
-    api.getPost(process.argv[2])
+const uploadTiktokVideo = function (postId) {
+    api.getPost(postId)
         .then(res => {
             //console.log('RES = ', res);
             let watermark_url = _.find(_.get(res, 'data.aweme_detail.video.download_addr.url_list'),
                 url => _.includes(url, 'watermark'));
 
             if (!watermark_url) {
-                console.log('device id blocked');
+                console.log('Device ID blocked');
+                console.log('Retrying...');
+                uploadTiktokVideo(postId);
             } else {
                 // duration of the video in ms
                 // _.find(_.get(res, 'data.aweme_detail.duration') / 1000
@@ -101,6 +100,13 @@ if (process.argv.length == 3) {
         .catch(err => {
             console.log("ERROR", err);
         });
+}
+
+if (process.argv.length == 3) {
+    // works without proper signing
+    // https://gist.github.com/pandafox/c19ad740d53d1da9b2c73ebf3d05f0e3#file-sample_post_detail-json
+    uploadTiktokVideo(process.argv[2]);
+
 } else {
     console.log("Message: Missing Post ID.");
     console.log("");

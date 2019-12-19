@@ -1,3 +1,4 @@
 node_modules/
 .idea/
+downloads/
 package-lock.json

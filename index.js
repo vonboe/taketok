@@ -9,6 +9,9 @@ const fs = require('fs');
 
 // https://github.com/sudoguy/tiktok_bot/blob/113607be2108fbc56c39ac174557374897e470f8/tiktok_bot/client/utils.py
 
+var retryCount = 0;
+var maxRetries = 5;
+
 const uploadLocally = function (url, id) {
     var outputFolder = './downloads/';
     if (!outputFolder.endsWith('/')) outputFolder += '/';
@@ -70,36 +73,44 @@ const params = getRequestParams({
 const api = new TikTokAPI(params, { signURL });
 
 const uploadTiktokVideo = function (postId) {
-    api.getPost(postId)
-        .then(res => {
-            //console.log('RES = ', res);
-            let watermark_url = _.find(_.get(res, 'data.aweme_detail.video.download_addr.url_list'),
-                url => _.includes(url, 'watermark'));
+    retryCount++;
 
-            if (!watermark_url) {
-                console.log('Device ID blocked');
-                console.log('Retrying...');
-                uploadTiktokVideo(postId);
-            } else {
-                // duration of the video in ms
-                // _.find(_.get(res, 'data.aweme_detail.duration') / 1000
+    if (retryCount > maxRetries) {
+        console.log("");
+        console.log("Message: Max retries have reached. Please try to run it again.");
+        console.log("");
+    } else {
+        api.getPost(postId)
+            .then(res => {
+                //console.log('RES = ', res);
+                let watermark_url = _.find(_.get(res, 'data.aweme_detail.video.download_addr.url_list'),
+                    url => _.includes(url, 'watermark'));
 
-                // music only URL
-                // _.first(_.get(res, 'data.aweme_detail.music.play_url.url_list'))
+                if (!watermark_url) {
+                    console.log('Device ID blocked');
+                    console.log('Retrying...');
+                    uploadTiktokVideo(postId);
+                } else {
+                    // duration of the video in ms
+                    // _.find(_.get(res, 'data.aweme_detail.duration') / 1000
 
-                // remove watermark, and use highest quality
-                let video_url = watermark_url
-                    .replace('watermark=1', 'watermark=0')
-                    .replace('bitrate=0', 'bitrate=1');
+                    // music only URL
+                    // _.first(_.get(res, 'data.aweme_detail.music.play_url.url_list'))
 
-                console.log("Video URL = ", video_url);
+                    // remove watermark, and use highest quality
+                    let video_url = watermark_url
+                        .replace('watermark=1', 'watermark=0')
+                        .replace('bitrate=0', 'bitrate=1');
 
-                uploadLocally(video_url, `${res.data.aweme_detail.aweme_id}.mp4`);
-            }
-        })
-        .catch(err => {
-            console.log("ERROR", err);
-        });
+                    console.log("Video URL = ", video_url);
+
+                    uploadLocally(video_url, `${res.data.aweme_detail.aweme_id}.mp4`);
+                }
+            })
+            .catch(err => {
+                console.log("ERROR", err);
+            });
+    }
 }
 
 if (process.argv.length == 3) {

@@ -16,3 +16,4 @@
    1. Go to Tiktok
    2. Access a video post
    3. Get the video post ID from the last segment of the URL
+   ![image](https://i.imgur.com/vNQF0ka.png)
